@@ -1,0 +1,19 @@
+local blocks = {
+    "LuckyBlock",
+    "SuperBlock",
+    "DiamondBlock",
+    "RainbowBlock",
+    "GalaxyBlock"
+}
+
+local function spawnBlocks()
+    for _, blockName in pairs(blocks) do
+        for i = 1, 200 do
+            game:GetService("ReplicatedStorage"):WaitForChild("Spawn"..blockName):FireServer()
+        end
+    end
+end
+
+spawnBlocks()
+
+-- I love you pps_artem 
