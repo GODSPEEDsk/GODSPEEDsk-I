@@ -15,5 +15,3 @@ local function spawnBlocks()
 end
 
 spawnBlocks()
-
--- I love you pps_artem 
