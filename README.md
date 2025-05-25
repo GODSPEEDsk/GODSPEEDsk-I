@@ -38,9 +38,9 @@ Si el nombre tiene espacios, reemplazalos con %20.
 
 
 Ejemplo: para ejecutar el script LuckyBlock giver, usá:
-
+``` lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/GODSPEEDsk/GODSPEEDsk-I/luaU/LuckyBlock%20giver", true))()
-
+```
 Requisitos mínimos del exploit:
 
 Soporte para loadstring
