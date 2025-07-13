@@ -1,0 +1,61 @@
+local Players = game:GetService("Players") local player = Players.LocalPlayer local character = player.Character or player.CharacterAdded:Wait() local hrp = character:WaitForChild("HumanoidRootPart") local playerGui = player:WaitForChild("PlayerGui")
+
+local function findTool() local backpack = player:FindFirstChild("Backpack") if backpack then local tool = backpack:FindFirstChild("RocketJumper") if tool then player.Character.Humanoid:EquipTool(tool) return tool end end return character:WaitForChild("RocketJumper") end
+
+local tool = findTool() local remote = tool:WaitForChild("FireRocket")
+
+local DISTANCIA_ABAJO = 2 local DELAY = 0.1 local TargetPlayers = {}
+
+local COLOR_FONDO = Color3.fromRGB(30, 30, 40) local COLOR_ENCABEZADO = Color3.fromRGB(25, 25, 35) local COLOR_BOTON = Color3.fromRGB(65, 120, 190) local COLOR_BOTON_HOVER = Color3.fromRGB(85, 150, 230) local COLOR_SELECCION = Color3.fromRGB(70, 170, 100)
+
+local screenGui = Instance.new("ScreenGui") screenGui.Parent = playerGui screenGui.Name = "RocketController" screenGui.ResetOnSpawn = false screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local mainFrame = Instance.new("Frame") mainFrame.Size = UDim2.new(0, 300, 0, 400) mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200) mainFrame.BackgroundColor3 = COLOR_FONDO mainFrame.BorderSizePixel = 0 mainFrame.Parent = screenGui mainFrame.Visible = true mainFrame.Active = true mainFrame.Draggable = true
+
+local uiCorner = Instance.new("UICorner") uiCorner.CornerRadius = UDim.new(0, 8) uiCorner.Parent = mainFrame
+
+local dropShadow = Instance.new("ImageLabel") dropShadow.Image = "rbxassetid://5234388158" dropShadow.ImageColor3 = Color3.new(0, 0, 0) dropShadow.ImageTransparency = 0.8 dropShadow.ScaleType = Enum.ScaleType.Slice dropShadow.SliceCenter = Rect.new(10, 10, 118, 118) dropShadow.Size = UDim2.new(1, 20, 1, 20) dropShadow.Position = UDim2.new(0, -10, 0, -10) dropShadow.BackgroundTransparency = 1 dropShadow.Parent = mainFrame dropShadow.ZIndex = -1
+
+local header = Instance.new("Frame") header.Size = UDim2.new(1, 0, 0, 30) header.BackgroundColor3 = COLOR_ENCABEZADO header.BorderSizePixel = 0 header.Parent = mainFrame
+
+local headerCorner = Instance.new("UICorner") headerCorner.CornerRadius = UDim.new(0, 8) headerCorner.Parent = header
+
+local title = Instance.new("TextLabel") title.Size = UDim2.new(0.7, 0, 1, 0) title.Position = UDim2.new(0, 10, 0, 0) title.Text = "Rocket Controller" title.TextColor3 = Color3.fromRGB(220, 220, 220) title.BackgroundTransparency = 1 title.TextSize = 16 title.Font = Enum.Font.GothamBold title.TextXAlignment = Enum.TextXAlignment.Left title.Parent = header
+
+local buttonContainer = Instance.new("Frame") buttonContainer.Size = UDim2.new(0.3, -10, 1, 0) buttonContainer.Position = UDim2.new(0.7, 0, 0, 0) buttonContainer.BackgroundTransparency = 1 buttonContainer.Parent = header
+
+local minimizeBtn = Instance.new("TextButton") minimizeBtn.Size = UDim2.new(0, 25, 0, 25) minimizeBtn.Position = UDim2.new(0, 5, 0.5, -12) minimizeBtn.Text = "_" minimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200) minimizeBtn.BackgroundColor3 = COLOR_BOTON minimizeBtn.AutoButtonColor = false minimizeBtn.Parent = buttonContainer
+
+local closeBtn = Instance.new("TextButton") closeBtn.Size = UDim2.new(0, 25, 0, 25) closeBtn.Position = UDim2.new(0, 35, 0.5, -12) closeBtn.Text = "X" closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200) closeBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60) closeBtn.AutoButtonColor = false closeBtn.Parent = buttonContainer
+
+local function setupButtonHover(button, hoverColor) local originalColor = button.BackgroundColor3 button.MouseEnter:Connect(function() button.BackgroundColor3 = hoverColor end) button.MouseLeave:Connect(function() button.BackgroundColor3 = originalColor end) end
+
+setupButtonHover(minimizeBtn, COLOR_BOTON_HOVER) setupButtonHover(closeBtn, Color3.fromRGB(200, 80, 80))
+
+local scrollFrame = Instance.new("ScrollingFrame") scrollFrame.Size = UDim2.new(1, -10, 1, -40) scrollFrame.Position = UDim2.new(0, 5, 0, 35) scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) scrollFrame.ScrollBarThickness = 6 scrollFrame.BackgroundTransparency = 1 scrollFrame.Parent = mainFrame
+
+local playerListLayout = Instance.new("UIListLayout") playerListLayout.Padding = UDim.new(0, 5) playerListLayout.Parent = scrollFrame
+
+local currentYPosition = 5
+
+local function createPlayerEntry(plr) local id = tostring(plr.UserId) local existing = scrollFrame:FindFirstChild(id) if existing then existing:Destroy() end local playerFrame = Instance.new("Frame") playerFrame.Size = UDim2.new(1, 0, 0, 60) playerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50) playerFrame.BorderSizePixel = 0 playerFrame.Name = id playerFrame.Parent = scrollFrame local frameCorner = Instance.new("UICorner") frameCorner.CornerRadius = UDim.new(0, 6) frameCorner.Parent = playerFrame local profileImage = Instance.new("ImageLabel") profileImage.Size = UDim2.new(0, 50, 0, 50) profileImage.Position = UDim2.new(0, 5, 0.5, -25) profileImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. plr.UserId .. "&width=420&height=420&format=png" profileImage.BackgroundTransparency = 1 profileImage.Parent = playerFrame local playerName = Instance.new("TextLabel") playerName.Size = UDim2.new(0.5, -60, 1, -10) playerName.Position = UDim2.new(0, 60, 0, 5) playerName.Text = plr.DisplayName .. " (@"..plr.Name..")" playerName.TextColor3 = Color3.fromRGB(220, 220, 220) playerName.BackgroundTransparency = 1 playerName.TextSize = 14 playerName.Font = Enum.Font.Gotham playerName.TextXAlignment = Enum.TextXAlignment.Left playerName.TextTruncate = Enum.TextTruncate.AtEnd playerName.Parent = playerFrame local selectButton = Instance.new("TextButton") selectButton.Size = UDim2.new(0, 80, 0, 30) selectButton.Position = UDim2.new(1, -85, 0.5, -15) selectButton.Text = TargetPlayers[plr.UserId] and "Deselect" or "Select" selectButton.TextColor3 = Color3.fromRGB(255, 255, 255) selectButton.Font = Enum.Font.GothamBold selectButton.Parent = playerFrame if TargetPlayers[plr.UserId] then selectButton.BackgroundColor3 = COLOR_SELECCION else selectButton.BackgroundColor3 = COLOR_BOTON end local buttonCorner = Instance.new("UICorner") buttonCorner.CornerRadius = UDim.new(0, 6) buttonCorner.Parent = selectButton setupButtonHover(selectButton, COLOR_BOTON_HOVER) selectButton.MouseButton1Click:Connect(function() if TargetPlayers[plr.UserId] then TargetPlayers[plr.UserId] = nil selectButton.Text = "Select" selectButton.BackgroundColor3 = COLOR_BOTON else TargetPlayers[plr.UserId] = plr selectButton.Text = "Deselect" selectButton.BackgroundColor3 = COLOR_SELECCION end end) end
+
+local function updatePlayerList() for _, child in ipairs(scrollFrame:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end for _, other in ipairs(Players:GetPlayers()) do if other ~= player then createPlayerEntry(other) end end end
+
+Players.PlayerAdded:Connect(function(plr) task.wait(1) createPlayerEntry(plr) end)
+
+Players.PlayerRemoving:Connect(function(plr) TargetPlayers[plr.UserId] = nil local item = scrollFrame:FindFirstChild(tostring(plr.UserId)) if item then item:Destroy() end end)
+
+updatePlayerList()
+
+local isMinimized = false local originalSize = mainFrame.Size
+
+minimizeBtn.MouseButton1Click:Connect(function() isMinimized = not isMinimized if isMinimized then mainFrame.Size = UDim2.new(0, 150, 0, 30) scrollFrame.Visible = false else mainFrame.Size = originalSize scrollFrame.Visible = true end end)
+
+closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+
+task.spawn(function() while true do task.wait(DELAY) for _, target in pairs(TargetPlayers) do if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then local targetHrp = target.Character.HumanoidRootPart local spawnPos = targetHrp.Position - Vector3.new(0, DISTANCIA_ABAJO, 0) local direccion = (targetHrp.Position - spawnPos).Unit remote:FireServer(direccion, spawnPos) end end end end)
+
+screenGui.Destroying:Connect(function() TargetPlayers = {} end)
+
+player.CharacterAdded:Connect(function(newChar) character = newChar hrp = character:WaitForChild("HumanoidRootPart") tool = findTool() remote = tool:WaitForChild("FireRocket") end)
