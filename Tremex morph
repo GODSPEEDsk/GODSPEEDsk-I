@@ -1,0 +1,137 @@
+local P=game:GetService("Players")
+local R=game:GetService("ReplicatedStorage")
+local pl=P.LocalPlayer
+local ch=pl.Character or pl.CharacterAdded:Wait()
+
+for _,i in pairs(ch:GetChildren()) do
+ if i:IsA("Accessory") or i:IsA("CharacterMesh") or i:IsA("SpecialMesh") then i:Destroy() end
+end
+
+local a={{SwimAnimation=0,DepthScale=1,RightLegColor=Color3.new(0.8235,0.7725,0.6118),MoodAnimation=0,Face=0,JumpAnimation=0,HeadColor=Color3.new(0.8235,0.7725,0.6118),BodyTypeScale=1,ClimbAnimation=0,LeftArmColor=Color3.new(0.8235,0.7725,0.6118),LeftLegColor=Color3.new(0.8235,0.7725,0.6118),Shirt=98716736590026,RightArmColor=Color3.new(0.8235,0.7725,0.6118),WidthScale=1,LeftArm=0,IdleAnimation=0,RightArm=0,GraphicTShirt=0,Head=0,Hat=80583983031229,Torso=0,RunAnimation=0,WalkAnimation=0,FallAnimation=0,TorsoColor=Color3.new(0.8235,0.7725,0.6118),Accessories={{AccessoryType=Enum.AccessoryType.Hair,AssetId=101899968107280},{AccessoryType=Enum.AccessoryType.Face,AssetId=133360134513039},{AccessoryType=Enum.AccessoryType.Back,AssetId=121463777593786},{AccessoryType=Enum.AccessoryType.Shoulder,AssetId=111444771573988},{AccessoryType=Enum.AccessoryType.Hat,AssetId=89643619973210},{AccessoryType=Enum.AccessoryType.Shoulder,AssetId=129028910780587}},RightLeg=0,HeadScale=1,HeightScale=1,ProportionScale=0,LeftLeg=0}}
+
+R:WaitForChild("BloxbizRemotes"):WaitForChild("CatalogOnApplyOutfit"):FireServer(unpack(a))
+
+local d
+
+local function desc(i)
+ local t={class=i.ClassName}
+ if i:IsA("Accessory")then
+  t.name=i.Name
+  local h=i:FindFirstChild("Handle")
+  if h then
+   t.handleClass=h.ClassName
+   t.handleSize=tostring(h.Size)
+   local m=h:FindFirstChildOfClass("SpecialMesh") or h:FindFirstChildOfClass("Mesh")
+   if m then
+    t.meshClass=m.ClassName
+    t.meshId=tostring(m.MeshId or m.Mesh or "")
+    t.textureId=tostring(m.TextureId or "")
+    if m:IsA("SpecialMesh")then t.meshScale=tostring(m.Scale or Vector3.new()) end
+   end
+   local decs={}
+   for _,c in ipairs(h:GetChildren())do
+    if c:IsA("Decal") or c:IsA("Texture")then table.insert(decs,tostring(c.Texture))end
+   end
+   table.sort(decs)
+   t.decals=decs
+  end
+  local atts={}
+  for _,c in ipairs(i:GetDescendants())do if c:IsA("Attachment")then table.insert(atts,c.Name)end end
+  table.sort(atts)
+  t.attachments=atts
+ elseif i:IsA("CharacterMesh")then
+  t.meshId=tostring(i.MeshId or "")
+  t.bodyPart=tostring(i.BodyPart or "")
+ elseif i:IsA("SpecialMesh")then
+  t.meshId=tostring(i.MeshId or "")
+  t.meshType=tostring(i.MeshType and i.MeshType.Name or "")
+  t.textureId=tostring(i.TextureId or "")
+  t.scale=tostring(i.Scale or Vector3.new())
+ end
+ return t
+end
+
+local function eq(a,b)
+ if type(a)~=type(b)then return false end
+ if type(a)~="table"then return tostring(a)==tostring(b) end
+ for k,v in pairs(a)do
+  if b[k]==nil then return false end
+  if type(v)=="table"then if not eq(v,b[k])then return false end
+  else if tostring(v)~=tostring(b[k])then return false end
+  end
+ end
+ for k in pairs(b)do if a[k]==nil then return false end end
+ return true
+end
+
+local function cap()
+ local c=pl.Character
+ if not c then return end
+ local l={}
+ for _,i in ipairs(c:GetChildren())do
+  if i:IsA("Accessory")or i:IsA("CharacterMesh")or i:IsA("SpecialMesh")then table.insert(l,desc(i))end
+ end
+ d=l
+end
+
+local function matches(i)
+ if not d then return false end
+ local dd=desc(i)
+ for _,w in ipairs(d)do if eq(dd,w)then return true end end
+ return false
+end
+
+local function clean(c)
+ local ch=c or pl.Character
+ if not ch then return end
+ for _,i in ipairs(ch:GetChildren())do
+  if i:IsA("Accessory")or i:IsA("CharacterMesh")or i:IsA("SpecialMesh")then
+   if not matches(i)then i:Destroy() end
+  end
+ end
+end
+
+local e=#(a>0 and a[1].Accessories or {}) or 0
+task.spawn(function()
+ local t=20
+ for i=1,t do
+  task.wait(.25)
+  local c=pl.Character
+  if c then
+   local cnt=0
+   for _,v in ipairs(c:GetChildren())do if v:IsA("Accessory")then cnt=cnt+1 end end
+   if cnt>=e then cap() break end
+  end
+  if i==t then cap() end
+ end
+end)
+
+pl.CharacterAdded:Connect(function(c)
+ c:WaitForChild("Humanoid")
+ task.wait(.5)
+ clean(c)
+
+ for _,i in ipairs(c:GetChildren())do
+  if i:IsA("Shirt")then
+   if i.ShirtTemplate~="http://www.roblox.com/asset/?id=93795223376702"then i:Destroy() end
+  elseif i:IsA("Pants")then i:Destroy() end
+ end
+
+ local bc=c:FindFirstChild("Body Colors")
+ if bc then
+  local function colorsMatch()
+   local cc=Color3.new(0.8235,0.7725,0.6118)
+   return bc.HeadColor==cc and bc.LeftArmColor==cc and bc.RightArmColor==cc and bc.LeftLegColor==cc and bc.RightLegColor==cc and bc.TorsoColor==cc
+  end
+  if not colorsMatch()then
+   R:WaitForChild("BloxbizRemotes"):WaitForChild("CatalogOnApplyOutfit"):FireServer(unpack(a))
+   task.wait(.5)
+   clean(c)
+   for _,i in ipairs(c:GetChildren())do
+    if i:IsA("Shirt")then
+     if i.ShirtTemplate~="http://www.roblox.com/asset/?id=93795223376702"then i:Destroy() end
+    elseif i:IsA("Pants")then i:Destroy() end
+   end
+  end
+ end
+end)
