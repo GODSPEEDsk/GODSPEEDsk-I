@@ -1,0 +1,276 @@
+--[[rinGT and GODSPEEDsk 
+Control de movimiento parcheado
+V #1.4
+
+*-Mejoras considerables de optimización*
+*-Arreglo de bug de transición entre vehicle y modo predeterminado *
+*-Minificacion*
+
+08/09/25 
+]]
+
+local Actor=(get_actor and get_actor())or(run_on_actor and{run_on_actor=function(_,f)f()end})or{run_on_actor=function(_,f)f()end}
+Actor:run_on_actor(function()
+local P,R,U,V,I=game:GetService("Players"),game:GetService("RunService"),game:GetService("UserInputService"),game:GetService("VRService"),Instance.new
+local p=P.LocalPlayer
+local g=p:WaitForChild("PlayerGui")
+local c=p.Character or p.CharacterAdded:Wait()
+local h,s=nil,nil
+local e=true
+local function f(a)if not a then return nil end local x=a:FindFirstChildOfClass("Humanoid")if not x then x=a:WaitForChild("Humanoid")end return x end
+local v,m,j=nil,nil,nil
+local H,I=(function()
+local n="__New_TouchGui__"..tostring(math.random(1000,9999))
+local t=I("ScreenGui")
+t.Name=n t.ResetOnSpawn=false t.Parent=g
+local u=I("Frame")
+u.Name="TouchControlFrame" u.Size=UDim2.new(1,0,1,0)
+u.Position=UDim2.new(0,0,0,0) u.BackgroundTransparency=1 u.BorderSizePixel=0 u.Parent=t
+return t,u
+end)()
+local S=p:WaitForChild("PlayerScripts")
+local M=S:WaitForChild("PlayerModule")
+local C=M:WaitForChild("ControlModule")
+local okT,T=pcall(function()return require(C:WaitForChild("TouchThumbstick"))end)
+local okJ,J=pcall(function()return require(C:WaitForChild("TouchJump"))end)
+local okV,Vc=pcall(function()local x=C:FindFirstChild("VehicleController")if not x then error()end return require(x)end)
+local K=function()
+local self={}self.p=nil self.j=nil self.e=false self.i=false self._=false
+local r=function()self.i=false self.t=nil if self.j then pcall(function()self.j.ImageRectOffset=Vector2.new(1,146)end)end end
+function self.Enable(a,b)
+if a then
+if not self.j then
+self.j=I("ImageButton")
+self.j.Name="JumpButton"
+self.j.Size=UDim2.new(0,64,0,64)
+self.j.Position=UDim2.new(1,-84,1,-120)
+self.j.AnchorPoint=Vector2.new(1,0)
+self.j.Image="rbxasset://textures/ui/TouchControlsSheet.png"
+self.j.ImageRectOffset=Vector2.new(1,146)
+self.j.ImageRectSize=Vector2.new(64,64)
+self.j.BackgroundTransparency=1
+self.j.Parent=b or I
+self.j.InputBegan:Connect(function(i)
+if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then
+self.i=true self.t=i pcall(function()self.j.ImageRectOffset=Vector2.new(65,146)end)
+end
+end)
+self.j.InputEnded:Connect(function(i)
+if i==self.t then self.t=nil self.i=false pcall(function()self.j.ImageRectOffset=Vector2.new(1,146)end)end
+end)
+end
+self.j.Visible=true self._=true
+else
+if self.j then self.j.Visible=false end r() self._=false
+end
+end
+function self.EnableButton(a)self.Enable(a,I)end
+function self.GetIsJumping()return self.i or false end
+return setmetatable(self,{__index=self})
+end
+if okT and T and type(T.new)=="function"then m=T.new()pcall(function()m:Enable(true,I)end)end
+if okJ and J and type(J.new)=="function"then j=J.new()pcall(function()if j.Enable then j:Enable(true,I)elseif j.EnableButton then j:EnableButton(true)end end)else j=K()pcall(function()j:Enable(true,I)end)end
+local L=function()
+local self={}self.e=false self.v=nil self.a={MaxSpeed=0,MaxSteeringAngle=35,Enabled=false}
+function self:Enable(f,s)
+self.e=f and true or false
+if f and s and type(s.IsA)=="function"then
+local ok,isa=pcall(function()return s:IsA("VehicleSeat")end)
+if ok and isa then self.v=s else self.v=nil end
+else self.v=nil end
+if not self.e and self.v then
+pcall(function()if rawget(self.v,"Throttle")~=nil then self.v.Throttle=0 end if rawget(self.v,"Steer")~=nil then self.v.Steer=0 end end)
+end
+end
+function self:ComputeThrottle(mv)if mv and mv~=Vector3.new(0,0,0)then return -mv.Z end return 0 end
+function self:ComputeSteer(mv)if mv and mv~=Vector3.new(0,0,0)and self.v then local z=mv.Z local x=mv.X local a=-math.deg(math.atan2(-x,-z))local n=a/35 if n>1 then n=1 end if n<-1 then n=-1 end return n end return 0 end
+function self:Update(mv,cam,act)if not self.e or not self.v then return Vector3.new(0,0,0)end local t=self:ComputeThrottle(mv)local s=self:ComputeSteer(mv)pcall(function()if rawget(self.v,"Throttle")~=nil then self.v.Throttle=t end if rawget(self.v,"Steer")~=nil then self.v.Steer=s end end)local cf=(self.v and self.v.CFrame)or CFrame.new()local l,r=cf.LookVector,cf.RightVector local w=l*(-mv.Z)+r*mv.X return Vector3.new(w.X,0,w.Z)end
+return self
+end
+if okV and Vc and type(Vc.new)=="function"then local ok,inst=pcall(function()return Vc.new(Enum.ContextActionPriority.Medium.Value)end)v=ok and inst or L()else v=L()end
+local O=function(a,b)
+if not v then return end
+local veh=false
+if b and type(b.IsA)=="function"then
+local ok,isa=pcall(function()return b:IsA("VehicleSeat")end)
+if ok and isa then veh=true end
+end
+pcall(function()
+if a and veh and e then v:Enable(true,b)else v:Enable(false,b)end
+end)
+end
+local B=function(ca)
+c=ca h=f(ca)
+if s then s:Disconnect()s=nil end
+if h then
+s=h.Seated:Connect(O)
+local t=h.SeatPart
+if t then
+local ok,veh=pcall(function()return(type(t.IsA)=="function")and t:IsA("VehicleSeat")end)
+if ok and veh then O(true,t)else pcall(function()v:Enable(false,nil)end)end
+else pcall(function()v:Enable(false,nil)end)end
+end
+end
+B(c)
+p.CharacterAdded:Connect(B)
+p.CharacterRemoving:Connect(function()if s then s:Disconnect()s=nil end h=nil c=nil end)
+local has_m=(m~=nil)
+local has_j=(j~=nil)
+local has_v=(v~=nil)
+local getMove_local
+if has_m and type(m.GetMoveVector)=="function"then
+getMove_local=function()return m:GetMoveVector()end
+else
+getMove_local=function()return Vector3.new(0,0,0)end
+end
+local isMoveVecCamRel_local
+if has_m and type(m.IsMoveVectorCameraRelative)=="function"then
+isMoveVecCamRel_local=function()return m:IsMoveVectorCameraRelative()end
+else
+isMoveVecCamRel_local=function()return false end
+end
+local getJump_local
+if has_j and type(j.GetIsJumping)=="function"then
+getJump_local=function()return j:GetIsJumping()end
+else
+getJump_local=function()return false end
+end
+local vUpdate_local
+if has_v and type(v.Update)=="function"then
+vUpdate_local=function(mv,camrel,act)return v:Update(mv,camrel,act)end
+else
+vUpdate_local=function()return Vector3.new(0,0,0)end
+end
+local fast=setmetatable({},{__index=function(t,k)
+if k=="m_enabled"then
+return has_m and m.enabled
+elseif k=="v_present"then
+return has_v and v
+end
+return nil
+end})
+local ignoreMoveFrames=0
+local inVehicle=false
+local function O_transition(active,seat)
+local isVeh=false
+if seat and type(seat.IsA)=="function"then
+local ok,isa=pcall(function()return seat:IsA("VehicleSeat")end)
+if ok and isa then isVeh=true end
+end
+if active and isVeh then
+inVehicle=true
+ignoreMoveFrames=1
+if v then v:Enable(true,seat)end
+else
+if inVehicle then
+ignoreMoveFrames=2
+if v then v:Enable(false,nil)end
+if has_m and type(m.Enable)=="function"then
+pcall(function()m:Enable(false,I)end)
+pcall(function()m:Enable(true,I)end)
+end
+end
+inVehicle=false
+end
+end
+if s then s:Disconnect()s=nil end
+if h then
+s=h.Seated:Connect(O_transition)
+local t=h.SeatPart
+if t then
+local ok,veh=pcall(function()return(type(t.IsA)=="function")and t:IsA("VehicleSeat")end)
+if ok and veh then O_transition(true,t)else O_transition(false,nil)end
+else O_transition(false,nil)end
+end
+local X=function(vv)
+local cam=workspace.CurrentCamera
+if not cam then return vv end
+local l,r=cam.CFrame.LookVector,cam.CFrame.RightVector
+local fp=false
+pcall(function()fp=(cam.Focus.Position-cam.CFrame.Position).Magnitude<1 end)
+if fp then
+local rt=h and h.RootPart
+if rt then
+local ll,rr=rt.CFrame.LookVector,rt.CFrame.RightVector
+local w=ll*(-vv.Z)+rr*vv.X
+return Vector3.new(w.X,0,w.Z)
+else
+local fb=l*vv.Z+r*vv.X
+return Vector3.new(fb.X,0,fb.Z)
+end
+else
+local w=l*(-vv.Z)+r*vv.X
+return Vector3.new(w.X,0,w.Z)
+end
+end
+local Y=function(vv,cf)
+local l,r=cf.LookVector,cf.RightVector
+local w=l*(-vv.Z)+r*vv.X
+return Vector3.new(w.X,0,w.Z)
+end
+local Z=function(ca)
+if not ca then return end
+local hh=ca:FindFirstChildOfClass("Humanoid")
+if hh and hh.SeatPart then return hh.SeatPart end
+end
+local T=function()
+if not m then return Vector3.new(0,0,0)end
+return getMove_local()
+end
+local mvf=(p.Move and p.Move)or nil
+local rc=R.RenderStepped:Connect(function(dt)
+if not m then return end
+if not(has_m and m.enabled)then return end
+if ignoreMoveFrames>0 then
+ignoreMoveFrames=ignoreMoveFrames-1
+if mvf then pcall(function()mvf(p,Vector3.new(0,0,0),false)end)
+else
+local rt=(h and h.RootPart)or(c and c:FindFirstChild("HumanoidRootPart"))
+if rt then rt.CFrame=rt.CFrame end
+end
+return
+end
+local mv=T()
+if mv==Vector3.new(0,0,0)then return end
+local camrel=false
+if has_m and type(m.IsMoveVectorCameraRelative)=="function"then camrel=isMoveVecCamRel_local()end
+local vr=(V and V.VREnabled)or false
+local fm=mv
+local seat=Z(c)
+local sv=false
+if seat and type(seat.IsA)=="function"then
+local ok,isa=pcall(function()return seat:IsA("VehicleSeat")end)
+if ok and isa then sv=true end
+end
+if e and sv then
+if has_v and type(v.Update)=="function"then
+fm=vUpdate_local(mv,camrel,true)or Vector3.new(0,0,0)
+else
+fm=Vector3.new(0,0,0)
+end
+fm=Vector3.new(0,0,0)
+else
+if camrel and not vr then
+local cam=workspace.CurrentCamera
+local l,r=cam.CFrame.LookVector,cam.CFrame.RightVector
+local w=l*(-mv.Z)+r*mv.X
+fm=Vector3.new(w.X,0,w.Z)
+else
+fm=Vector3.new(mv.X,0,mv.Z)
+end
+end
+if mvf then
+pcall(function()mvf(p,fm,false)end)
+else
+local rt=(h and h.RootPart)or(c and c:FindFirstChild("HumanoidRootPart"))
+if rt and fm then rt.CFrame=rt.CFrame+fm*(dt*16)end
+end
+local ij=false
+if has_j and type(j.GetIsJumping)=="function"then
+ij=getJump_local()
+end
+if ij and h then h.Jump=true end
+end)
+local old=g:FindFirstChild("TouchGui")
+if old then old:Destroy()end
+end)
